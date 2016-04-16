@@ -1,0 +1,16 @@
+
+ Start  Stop   Length Name               Class
+
+ 00000H 001F8H 001F9H _TEXT              CODE
+ 001FAH 0021BH 00022H _DATA              DATA
+ 0021CH 0060FH 003F4H _BSS               BSS
+
+Error: Undefined symbol _PRINTF in module LAB3/LAB3.C
+Error: Undefined symbol _GETCH in module LAB3/LAB3.C
+Error: Undefined symbol _SETVECT in module LAB3/LAB3.C
+Error: Undefined symbol _GETVECT in module LAB3/LAB3.C
+Error: Undefined symbol __FPUTC in module LAB3/LAB3.C
+Error: Undefined symbol __STREAMS in module LAB3/LAB3.C
+Program entry point at 0000:0000
+Warning: No stack
+
