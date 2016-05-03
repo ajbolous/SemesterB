@@ -6,47 +6,50 @@ void interrupt(*Int70Save) (void);
 void interrupt(*Int9Save) (void);
 char old_0A1h_mask, old_70h_A_mask;
 int local_flag = 1, x71h1=0, x71h2=0, x71h3;
-
+int numberOfLetters = 0;		// number of keys pressed by user
 unsigned long counter;
 unsigned long  times[200];				// array for the difference between two 9's intterupt
 char scanCode = 0;				// scan code of the key
-char letters[200];
+char letters[] = "__1234567890-=__qwertyuiop[]\_asdfghjkl;'____zxcvbnm,./     ";		// will be used to convert from Scan code to Ascii code
+int ch = 0;						// to cancel the first counting before the first press
+int  flag=0;
 int index = 0;
 
 void interrupt Int9(void)
+
 {
+
 	asm{
-		IN   AL,60h
-		//CHECK IF RELEASE
-		TEST AL,80H 
-		JNZ Release
-		MOV scanCode, AL
-		//ACK TO DEVICE
-		IN AL,61H
-		OR AL,80H
-		OUT 61H,AL
-		AND AL,7FH
-		OUT 61H,AL
-	}
-	if (index > 200){
-		scanCode = 28;
-		return;
-	}
-	putchar(scanCode);
-	if (index == 0){
-		counter = 0;
-	}
-	
-	times[index] = counter;
-	index++;
-	counter = 0;
-	
-	Release:
-		asm{
-			MOV AL,20H
-			OUT 20H,AL
+		IN AL,60h
+		PUSH AX
+		IN AL,61h
+		OR AL,80h
+		OUT 61h,al
+		AND AL,7Fh
+		OUT 61h,al
+		pop ax
+		test al,80h
+		jnz RELEASE
+		mov flag,1
+		mov scanCode,al }
+		if (ch != 0)
+		{
+			times[numberOfLetters] = counter;
+			numberOfLetters++;
 		}
+	ch++;
+	counter = 0;
+	if (scanCode != 28)
+		printf("%c", letters[(int)scanCode]);
+
+RELEASE:
+	asm{
+		mov al,20h
+		out 20h,al }
+
 }
+
+
 
 void interrupt Int70(void){
 	counter++;
@@ -170,7 +173,9 @@ void deactivate(){
 
 void SortArr(int NumOfLetters, int ar [])
 {
-	int i = 0, j = 0;
+	int i = 0;
+	int j = 0;
+
 	int replace;
 	for (i = 0; i < NumOfLetters;i++)
 	{ 
@@ -187,11 +192,42 @@ void SortArr(int NumOfLetters, int ar [])
 }
 
 void printStatistics(){
-	int MaxTime, MinTime, MedTime, TotalTime;
-	int i =0;
-	for(i=0;i<10;i++){
-		printf("%ld\n",times[i]);
+	int MaxTime, MinTime, MedTime, TotalTime,temp;
+	int j =0;
+	int i=0;
+	printf("\n\nTimed: \n");
+	for (j = 0; j < numberOfLetters; j++)
+		printf(" %ld ", times[j]);
+
+	for (i = 0; i < (numberOfLetters - 1); i++)
+	{
+		for (j = i + 1; j < numberOfLetters; j++)
+			if (times[i]  > times[j]) //swap
+			{
+				temp = times[i];
+				times[i] = times[j];
+				times[j] = temp;
+			}
+
 	}
+
+	for (i = 0; i < numberOfLetters; i++)
+		TotalTime += times[i];
+
+	MaxTime = times[numberOfLetters - 1];
+	MinTime =times[0];
+	MedTime = times[(numberOfLetters / 2)];
+
+	printf("\n\nSorted:\n");
+	for (j = 0; j < numberOfLetters; j++)
+		printf(" %ld ", times[j]);
+
+	printf("\n\n");
+	printf("\nMax time =  %ld / 1024 secs", MaxTime);
+	printf("\nMin time =  %ld / 1024 secs", MinTime);
+	printf("\nMed time =  %ld / 1024 secs", MedTime);
+	printf("\nTotal time =  %ld / 1024 secs", TotalTime);
+
 	getch();
 }
 
