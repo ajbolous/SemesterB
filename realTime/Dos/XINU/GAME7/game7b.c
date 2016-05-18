@@ -38,42 +38,52 @@ char display[2001];
 char ch_arr[2048];
 int rear,front = -1;
 //SYSTEM PARAMETERS
-
 char display_draft[ROW][COL];
-
+char display_attrb[ROW][COL];
 //MOUSE MOUSE MOUSE
 POINT mousePosition;
+POINT ball_position;
+int player_position;
 int mousePressed = 0;
 //MOUSE MOUSE MOUSE
-
+int down=1;
+POINT ball_pos;
 /*----------------------------------------Interrupts-------------------------*/
 /*---------------------------------------------------------------------------*/
 
+
 INTPROC MYint116()
 {
-	int x,y;
+	
 asm{
 			PUSH AX
+			
+				
+				
+				
 				MOV AX,3
 				INT 33H
+				MOV mousePressed,AX
 				MOV WORD PTR mousePosition.x ,CX	
 				MOV WORD PTR mousePosition.y,DX
-				AND bx,1h
-				jnz BUTTONPRESSED
+
 				POP AX
 		}
-		printf("fuck you");
-BUTTONPRESSED:
-	mousePressed = 1;
-	printf("fuck you");
-	return;
-mousePressed = 0;
-return;
+		if(mousePressed& 1==1)
+		{
+			printf("FUCKK %d %d ",mousePosition.x,mousePosition.y);
+		}
+		else
+			printf("NOO");
+		//printf("fuck you");
+	
 }
+
+
 
 INTPROC new_int9(int mdevno)
 {
- char result = 0;
+ char ch ;
  int scan = 0;
   int ascii = 0;
 
@@ -86,14 +96,24 @@ asm {
   MOV BYTE PTR scan,AH
   MOV BYTE PTR ascii,AL
  } //asm
+switch(scan)
+{
+	case 75:
+	ch='L';
+	break;
+	case 77:
+	ch='R';
+	break;
+	default: ch=-1; break;
+}
 
- if ((scan == 46)&& (ascii == 3)) // Ctrl-C?
+ if ((scan == 46)&& (ascii == 3)||(scan==1)) // Ctrl-C?
    asm INT 27; // terminate xinu
 
-   send(receiver_pid, ascii); 
+   send(receiver_pid, ch); 
 
 Skip1:
-
+return ;
 } // new_int9
 
 void set_new_int9_newisr()
@@ -120,7 +140,7 @@ void set_new_int116_newisr()
      return;
     }
 
-} // set_new_int9_newisr
+} // set_new_int116_newisr
 
 void Set_Int116(){
 	set_new_int116_newisr();
@@ -132,73 +152,149 @@ void Set_Int116(){
 			mov ax,1 // set cursor mouse
 			int 33h
 		}
+		printf("HII");
 }
 
 /*/------------------------Drawing------------------------*/
 /*---------------------------------------------------------*/
+void clear_display()
+{
+  int i,j;
+	for(i=0; i < 22; i++)
+		for(j=0; j < COL; j++)
+			{
+			display_draft[i][j] = ' ';  // blank
+			display_attrb[i][j]=50;
+			}
+	for(i; i < ROW; i++)
+	for(j=0; j < COL; j++)
+	{
+	display_draft[i][j] = ' ';  // blank
+	display_attrb[i][j]=40;
+	}
+}
 
 void DrawBanner(int x,int y){
 
 }
-void DrawPlayer(int x, int y)
-{
+
+void drawPower(int x ,int y){
+	int i ; 
+	 for (i=0 ; i<7 ; i++)
+	 {
+	 display_draft[x+i][y]='^';
+	 display_attrb[x+i][y]=16;
+
+	 }
+	  
 	
-	        display_draft[x][y] = '_';
-			display_draft[x+1][y-1] = '(';
-			display_draft[x+1][y+1] = ')';
-			display_draft[x+2][y] = '|';
-			display_draft[x+3][y] = '|';
-			display_draft[x+2][y-1] = '/';
-			display_draft[x+2][y+1] = '/';
-			display_draft[x+3][y-1] = '/';
-			display_draft[x+3][y+1] = '\\';
-			
-			
+}
+void drawPlayer(int position)
+{
+		
+		display_draft[18][position+1] = ')';
+		display_attrb[18][position+1]=112;
+		
+		display_draft[18][position] = ' ';
+		display_attrb[18][position]=112;
+		
+		display_draft[18][position-1] = '(';
+		display_attrb[18][position-1]=112;
+		
+		display_draft[19][position] = '-';
+		display_attrb[19][position]=112;
+		
+		display_draft[20][position+2] = '/';//right right
+		display_attrb[20][position+2]=112;
+		
+		display_draft[20][position+1] = '\\';//right 3
+		display_attrb[20][position+1]=112;
+		
+		display_draft[20][position-1] = '|';//left4
+		display_attrb[20][position-1]=112;
+		
+		display_draft[20][position] = '|';//mid2
+		display_attrb[20][position]=112;
+		
+		display_draft[21][position-1] = '\\';//left3
+		display_attrb[21][position-1]=112;
+		
+		display_draft[21][position] = '|';//mid1
+		display_attrb[21][position]=112;
+		
+		display_draft[22][position+1] = '\\';//right2
+		display_attrb[22][position+1]=112;
+		
+		display_draft[22][position-1] = '\\';//left2
+		display_attrb[22][position-1]=112;
+		
+		display_draft[23][position-1] = '/';//left1
+		display_attrb[23][position-1]=7;
+		
+		display_draft[23][position+1] = '/';//right1
+		display_attrb[23][position+1]=7;	
 }
 
-void DrawBasket(int x,int y)
-{
-	int i;
-	for(i=0;i<12;i++)
-	     display_draft[x+i][y] = '|';	
-	for(i=0;i<12;i++)
-		display_draft[x+i][y+1] = '|';		
-	for(i=1;i<8;i++)
-		display_draft[x-1][y-i] = '_';
-	for(i=2;i<8;i++)
-		display_draft[x-1][y+i] = '_';
-	for(i=0;i<8;i++)
-		display_draft[x-5][y+i] = '_';
-		for(i=0;i<8;i++)
-		display_draft[x-5][y-i] = '_';
-	for(i=1;i<5;i++)
-		display_draft[x-i][y+7] = '|';
-	for(i=1;i<5;i++)
-		display_draft[x-i][y-7] = '|';
-	for(i=0;i<5;i++)
-		display_draft[x-2][y+i] = '_';
-	for(i=0;i<5;i++)
-		display_draft[x-2][y-i] = '_';
-	for(i=0;i<5;i++)
-	{
-		display_draft[x-1][y-i-1] = '/';
-		display_draft[x-1][y-i-2] = '\\';
-		i++;
-	}
-	for(i=0;i<5;i++)
-	{
-		display_draft[x-1][y+i+1] = '/';
-		display_draft[x-1][y+i+2] = '\\';
-		i++;
-	}
-	
-	
-} 
 
-void DrawBall(int x,int y)
+void drawBasket(int x,int y)
 {
-	display_draft[x][y-1] = ')';
-	display_draft[x][y-2] = '(';	
+	int i,j;
+		for(i=0; i <25 ; i++)    
+    for(j=COL-1; j < COL; j++)
+	{
+      display_draft[i][j] = '|';    // blank
+	  display_attrb[i][j]=16;
+	}	
+	
+	      display_draft[x-6][COL-3] = '_';    // blank
+	  display_attrb[x-6][COL-3]=16;
+	        display_draft[x-6][COL-2] = '_';    // blank
+	  display_attrb[x-6][COL-2]=16;
+	  
+	  	    for(j=0; j < 9; j++)
+	{
+		display_draft[x-6][COL-4-j] = '=';    // blank
+	  display_attrb[x-6][COL-4-j]=96;
+	}
+	    for(j=0; j < 7; j++)
+	{
+		display_draft[x-5][COL-5-j] = '-';    // blank
+	  display_attrb[x-5][COL-5-j]=96;
+	}
+		    for(j=0; j < 5; j++)
+	{
+		display_draft[x-4][COL-6-j] = '-';    // blank
+	  display_attrb[x-4][COL-6-j]=96;
+	}
+		    for(j=0; j < 3; j++)
+	{
+		display_draft[x-3][COL-7-j] = '-';    // blank
+	  display_attrb[x-3][COL-7-j]=96;
+	}
+			    for(j=0; j < 1; j++)
+	{
+		display_draft[x-2][COL-8-j] = '-';    // blank
+	  display_attrb[x-2][COL-8-j]=96;
+	}
+}
+
+void drawBall(int x,int y)
+{
+			display_draft[x+1][y+4]='_';
+			
+			display_draft[x+1][y+5]='_';
+			
+			display_draft[x+1][y +3]='|';
+			display_attrb[x+1][y+3]=64;
+			
+			display_draft[x+1][y+6]='|';
+			display_attrb[x+1][y+6]=64;
+			
+			display_draft[x+1][y+4]='_';
+			display_attrb[x+1][y+4]=64;
+			
+			display_draft[x+1][y+5]='_';
+			display_attrb[x+1][y+5]=64;	
 }
 
 /*--------------------------------------Functions---------------------------*/
@@ -209,7 +305,7 @@ void DrawBall(int x,int y)
  */
 
 
- void moveCursor(int x,int y,char mychar, int color){
+ void moveCursor(int x,int y,char mychar,char color){
 	 int position = y*80 + x;
 	 int mem_pos = position*2;
 	 asm{
@@ -226,7 +322,7 @@ void DrawBall(int x,int y)
 		 mov es,ax
 		 mov di, mem_pos
 		 mov al,mychar
-		 mov ah,03h
+		 mov ah,color
 		 
 		 mov es:[di],ax
 	 }
@@ -241,7 +337,11 @@ void displayer( void )
             receive();
 			for(i=5;i<ROW;i++)
 				for(j=0;j<COL;j++)
-					moveCursor(j,i,display_draft[i][j],0);
+				{
+					
+					moveCursor(j,i,display_draft[i][j],display_attrb[i][j]);
+				}
+					
 				
          } //while
 } // prntr
@@ -264,15 +364,26 @@ void receiver()//
 void updateter()
 {
 
-  int i,j;
-  int ball_position=24;           
+ 
+  int i,j;           
   char ch;
-   
+  ball_pos.x = 19;
+	ball_pos.y=50;
+   player_position=35;
   while(1)
   {
 
    receive();
-
+    clear_display();
+        if(ball_pos.x==22)
+			down=0;
+			else
+			if(ball_pos.x==19)
+			down=1;
+			if(down==1)
+			ball_pos.x++;
+			else
+			ball_pos.x--;
    while(front != -1)
    {
      ch = ch_arr[front];
@@ -281,13 +392,15 @@ void updateter()
      else
        front = rear = -1;
 
-     if ( (ch == 'a') || (ch == 'A') ){
-       if (ball_position >= 2 )
-              ball_position--;
+     if ( (ch == 'L') ){
+       if (player_position >= 3 )
+              player_position--;
 	 }
-     else if ( (ch == 'd') || (ch == 'D') )
-       if (ball_position <= 23 )
-         ball_position++;
+      if ( (ch == 'R')  )
+	  {
+       if (player_position <= 72 )
+         player_position++;
+  }
  
        // if
    } // while(front != -1)
@@ -298,9 +411,11 @@ void updateter()
             display_draft[i][j] = ' ';  // blank
     
 	//Draw the Player and the basket and the Ball
-	DrawPlayer(20,45);
-	DrawBasket(15,65);
-    DrawBall(ball_position,50);
+	
+	drawPlayer(player_position);
+	drawBasket(15,65);
+    drawBall(ball_pos.x,ball_pos.y);
+	//drawPower(10,60);
 	DrawBanner(0,0);
   } // while(1)
 
@@ -344,5 +459,7 @@ xmain()
         resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
         receiver_pid =recvpid;  
         set_new_int9_newisr();
+		Set_Int116();
+		
     schedule(2,5, dispid, 0,  uppid, 3);
 } // xmain
