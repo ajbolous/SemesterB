@@ -344,5 +344,5 @@ xmain()
         resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
         receiver_pid =recvpid;  
         set_new_int9_newisr();
-    schedule(2,55, dispid, 0,  uppid, 33);
+    schedule(2,5, dispid, 0,  uppid, 3);
 } // xmain
