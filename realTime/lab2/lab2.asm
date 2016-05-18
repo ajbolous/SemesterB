@@ -1,174 +1,151 @@
 ;
-; Cursor2.asm
+; B800h.ASM
+; This program demonstrates the use of hardware scrolling.
 ;
-;This program demonstrates cursor manipulation.
-;
-;
-Stak              SEGMENT PARA STACK 'STACK'
-DB                 256 DUP(0)
-Stak              ENDS
+Stack              SEGMENT PARA STACK 'STACK'
+                   DB     256 DUP(0)
+Stack              ENDS
 ;
 Data               SEGMENT PARA PUBLIC 'Data'
-CursorPos          DW      0     ; Number of lines scrolled down
+Count              DB      0     ; Number of lines scrollled down
 Base               DW      0
-var                DB      0Eh      
-        
 ;
+Direction          DB      0     ; The scroll direction
+;                                  0=Down    1=Up
 Data               ENDS
 Code               SEGMENT PARA PUBLIC 'Code'
-                   .386  ; Enable 386 commands
-SetCursorPos          PROC    NEAR
-; Set Cursor to position in BX
-; Input: BX
-; Output: None
-;
-  MOV              DX,3D4H  ; Point to 3D4H - 3D5H port pair
-  MOV              AL,14    ; Address of cursor register pos high byte
-  MOV              AH,BH    ; Get desired value of cursor pos high byte
-  OUT              DX,AX    ; Port(3D4h) = 14, Port(3D5h) = Value of BH
-;
-  MOV              AL,15    ; Address of cursor register pos low byte
-  MOV              AH,BL    ; Get desired value pf cursor pos low byte
-  OUT              DX,AX    ; Port(3D4h) = 15, Port(3D5h) = Value of BL
-;
-  RET                       ; Return to caller
-SetCursorPos          ENDP
-;
 Start              PROC    FAR
 ;
-;STANDARD PROGRAM PROLOGUE
+;Standard program prologue
 ;
   ASSUME           CS:Code
   PUSH             DS          ; Save PSP segment address
   MOV              AX,0
-  PUSH             AX          ; Save INT 20h address offset (PSP+0)
+  PUSH             AX          ; Save RET address offset (PSP+0)
   MOV              AX,Data
   MOV              DS,AX       ; Establish Data segment addressability
   ASSUME           DS:Data
 ;
 ;Part1 : Initialize the display adapter
 ;
-  MOV              AH,0          ; Select function = 'Set mode'
-  MOV              AL,1          ; 40 by 25 color image
-  INT              10h           ; Adapter initialized. Page 0 displayed
+  MOV              AH,0          ; Select function = 'SET MODE'
+  MOV              AL,1          ; 40 BY 25 Color image
+  INT              10H           ; Adapter initilizedD. Page 0 displayed
 ;
-  MOV              AX,0B800h     ; Segment address of memory on color adapter
-;
+  MOV              AX,0B800H     ; Segment address of memory of color adapter
+                                 ; in text mode
   MOV              ES,AX         ; Set up extra segment register
   MOV              DI,0          ; Initial offset address into segment
-  MOV              AL,' '        ; Character space to fill adapter memory
-  MOV              AH,0Eh        ; Attribute byte : Intense yellow
-  mov              var,AH
-  MOV              CX,1000       ; Initialize count, 1 Screen
-  CLD                            ; Write forward
-  REP              STOSW         ; Write
+  MOV              AL,'A'        ; Character A to fill adapter memory
+  MOV              AH,03H        ; Attribute byte: BLUE + GREEN = LIGHT BLUE
 ;
-
-  
+  MOV              CX,2000
+  CLD
+  REP              STOSW
+;
+  MOV              AL,'B'        ; Character B to fill adapter memoory
+  MOV              AH,05H        ; Attribute byte: BLUE + RED = PURPLE
+;
+  MOV              CX,2000
+  CLD
+  REP              STOSW
+;
+  MOV              AL,'C'        ; Character C to fill adapter memory
+  MOV              AH,06H        ; Attribute byte: GREEN + RED = BROWN
+;
+  MOV              CX,2000
+  CLD
+  REP              STOSW
+;
+  MOV              AL,'D'        ; Character D to fill adapter memory
+  MOV              AH,07H        ; Attribute byte: GREEN + RED + BLUE = WHITE
+;
+  MOV              CX,2000
+  CLD
+  REP              STOSW
+;
 ;
 ; Set the cursor address registers
 ;
-  MOV              BX,12*40+20
-  MOV          DI,BX   
-  CALL             SetCursorPos
+  MOV              BX,40*63      ; Cursor position: 40th row, Col 0
+  MOV              DX,3D4h       ; 3D4h - 3D5h: Display adapter ports
+  MOV              AL,14         ; 14 - Cursor address high byte register
+  MOV              AH,BH         ; Load AH with desired high byte value
+  OUT              DX,AX         ; Output AL to port 3D4h, AH to port 3D5h
 ;
-;PART 2 : Wait for key strike
+  MOV              DX,3D4h       ; 3D4h - 3D5h: Display adapter ports
+  MOV              AL,15         ; 15 - Cursor address low byte register
+  MOV              AH,BL         ; Load AH with desired low byte value
+  OUT              DX,AX         ; Output AL to port 3D4h, AH to port 3D5h
 ;
-; Wait for key
 ;
-NextLoop:
-  MOV              AH,0       ; Wait and read key
-  INT              16h        ;
-  CMP              AH,1       ; Is it Esc?
-  JE               ToReturn   ; Yes - Return to DOS
+;PART 2 : Scroll the display every second until a key is hit
 ;
-;  Not esc key - change cursor
-    CMP AH,75
-    JE LEFT
-    CMP AH,77
-    JE RIGHT
-    CMP AH,72
-    JE UP
-    CMP AH,80
-    JE DOWN
-    CMP AH,60
-    JE MAXCURSOR
-    CMP AH,61
-    JE MINCURSOR
-    CMP AH,59
-    JE ATTRIBUTE
-    JMP LETTER
-  LEFT:
-       CMP DI,0
-       jng setCursor
-       DEC DI
-       MOV BX,DI
-       JMP SetCursor
-   RIGHT:
-       CMP DI,999
-       JGE setCursor
-       INC DI
-       MOV BX,DI
-       JMP SetCursor
-   UP:
-       CMP DI,39
-       JNG setCursor
-       SUB DI,40
-       MOV BX,DI
-       JMP SetCursor
-   DOWN:
-       CMP DI,960
-       JGE SetCursor
-       ADD DI,40
-       MOV BX,DI
-       JMP SetCursor
- ; 3D4H  Graphics adapter address register port
-; 3D5H  Graphics adapter data register port
+Delay:
+  ; Delay AL*CX operations
+  MOV               AL,10
+Tenth:
+  MOV               CX,28000
+Dloop:
+  LOOP             Dloop
+  DEC              AL
+  CMP              AL,0
+  JNE              Tenth
 ;
-   MAXCURSOR:
-       MOV DX,3D4h
-       MOV AX,0E0Ah  ; Cursor start address (0Ah) - Value 14 (0Dh)
-       OUT DX,AX     ; Port(3D4h) = 0Ah, Port(3D5h) = 01h
-       MOV AX,0F0Bh  ; Cursor end address - Value 15 (0Eh)
-       OUT DX,AX     ; Port(3D4h) = 0Bh, Port(3D5h) = 0Eh
-       JMP  SetCursor
-    MINCURSOR:   
-       MOV  DX,3D4h  ; Point TO 3D4h - 3D5h port pair
-       MOV  AX,000Ah ; Cursor start address (0Ah) - Value 0 (00h)
-       OUT  DX,AX    ; Port(3D4h) = 0Ah, Port(3D5h) = 01h
-       MOV  AX,0F0Bh ; Cursor end address - Value 15 (0Eh)
-       OUT   DX,AX    ; Port(3D4h) = 0Bh, Port(3D5h) = 0Eh
-       JMP SetCursor
-    ATTRIBUTE:
-       MOV  Dl,var 
-       INC  Dl
-       MOV  var,Dl
-       MOV   AH,var
-       SHL DI,1
-       MOV   AL,BYTE PTR ES:[DI]
-       MOV   ES:[DI],AX
-       SHR DI,1
-       JMP  SetCursor
-    
-    
-   
-    LETTER:
-       MOV BX,DI
-       SHL DI,1 ; set the cursor in   even offset position  
-       MOV BYTE PTR ES:[DI],AL ;read the letter
-       SHR DI,1 ; set rhe position of the cursor after we read the letter
-       CMP DI,998
-       JG setCursor
-       ADD DI,1
-       SetCursor:
-       MOV BX,DI
-       CALL setCursorPos
-       JMP  NextLoop   ; Repeat main loop
+  MOV              AH,1         ; User pressed key?
+  INT              16H
+  JZ               Scroll       ; No, scroll
+  MOV              AH,0         ; Yes, read the key
+  INT              16H
+  CMP              AH,1         ; Is it Esc?
+  JE               ToReturn     ; Yes - return to DOS
+  MOV              AH,0         ; No: Wait for another key
+  INT              16H
+  CMP              AH,1         ; Was it Esc?
+  JE               ToReturn     ; Yes - return to DOS
+;                               ; No - Continue
+Scroll:
+  MOV              BX,Base      ; Retrieve present location
+  CMP              Direction,0  ; Backwards or Forwards?
+  JNE              Backwards    ; Direction = 1: Backwards
+;                                 Direction = 0: Forwards
+  INC              Count        ; Advance 1 line
+  CMP              Count,160    ; End of 4 pages?
+  JB               Down_Ok      ; No
+;
+  MOV              Direction,1  ; Yes, reverse direction
+Down_Ok:
+  ADD              BX,40        ; No: Advance 1 line
+  MOV              Base,BX      ; Store location
+;
+  JMP              SHORT  Update
+;
+Backwards:
+  DEC              Count        ; Backtack 1 line
+  CMP              Count,0      ; Reached first line?
+  JNE              Up_Ok        ; No
+;
+  MOV              Direction,0  ; Yes, reverse direction
+Up_Ok:
+  SUB              BX,40        ; Backtack 1 line
+  MOV              Base,BX      ; Store location
+;
+Update:
+  MOV              DX,3D4h      ; 3D4h - 3D5h: Display adapter ports
+  MOV              AL,12        ; Display position high byte register
+  MOV              AH,BH        ; Move desired high byte value to AH
+  OUT              DX,AX        ; Output AL to port 3D4h, AH to port 3D5h
+  MOV              DX,3D4h      ; 3D4h - 3D5h: Display adapter ports
+  MOV              AL,13        ; Display position low byte register
+  MOV              AH,BL        ; Move desired low byte value to AH
+  OUT              DX,AX        ; Output AL to port 3D4h, AH to port 3D5h
+;
+  JMP              Delay           ; Repeat the process
 ;
 ToReturn:
-                   MOV  AX,2
+                   MOV  AX,3   ; Restore adapter mode
                    INT  10h
-                   RET
+                   RET         ; Return to DOS
 Start              ENDP
 Code               ENDS
   END              Start
