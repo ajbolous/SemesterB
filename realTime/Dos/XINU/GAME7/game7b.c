@@ -4,8 +4,8 @@
 #include <kernel.h>
 #include <io.h>
 #include <bios.h>
-
-extern SYSCALL  sleept(int);
+#include "game7b.h"
+//extern SYSCALL  sleept(int);
 extern struct intmap far *sys_imp;
 /*------------------------------------------------------------------------
  *  xmain  --  example of 2 processes executing the same code concurrently
@@ -15,7 +15,6 @@ extern struct intmap far *sys_imp;
  #define  COL 80
 #define ARROW_NUMBER 5
 #define TARGET_NUMBER 4
-
 typedef struct bitmap{
 	int color;
 	int ch;
@@ -26,56 +25,68 @@ typedef struct point{
 	int y;
 }POINT;
 
-
 //SYSTEM PARAMETERS
 int receiver_pid;
 int gcycle_length;
 int gno_of_pids;
 int point_in_cycle;//taderot ha7lafat tahle5em
 extern struct intmap far *sys_imp;
-int	(*Int8Save)();
+//int	(*Int8Save)();
 char display[2001];
 char ch_arr[2048];
-int rear,front = -1;
+int rear=-1;
+int front = -1;
 //SYSTEM PARAMETERS
 char display_draft[ROW][COL];
 char display_attrb[ROW][COL];
 //MOUSE MOUSE MOUSE
-POINT mousePosition;
-POINT ball_position;
+ POINT mousePosition;
+ POINT ball_position;
 int player_position;
 int mousePressed = 0;
+int mouseFlag=0;
+int get=1;
+int mouseCounter=0;
+int throw;
 //MOUSE MOUSE MOUSE
 int down=1;
-POINT ball_pos;
+ POINT ball_pos;
 /*----------------------------------------Interrupts-------------------------*/
 /*---------------------------------------------------------------------------*/
 
-
-INTPROC MYint116()
+INTPROC MYint116(int mdevno)
 {
-	
+	int x,y;
 asm{
 			PUSH AX
-			
-				
-				
+			MOV AX,5
+				INT 33H
+				MOV  mousePressed,AX
 				
 				MOV AX,3
 				INT 33H
-				MOV mousePressed,AX
-				MOV WORD PTR mousePosition.x ,CX	
-				MOV WORD PTR mousePosition.y,DX
+				
+				MOV WORD PTR x ,CX	
+				MOV WORD PTR y,DX
 
 				POP AX
 		}
+		mousePosition.x=x;
+		mousePosition.y=y;
 		if(mousePressed& 1==1)
 		{
+			mouseFlag=1; // if mouseFlag=1 then the player can throw the ball
 			printf("FUCKK %d %d ",mousePosition.x,mousePosition.y);
 		}
-		else
+		
+			else if(mouseFlag==1&&get==1) // if the player can throw the ball and the ball with player
+			{
+				mouseFlag=0;
+			//mouseCounter=0;
+			//	throw=1;
 			printf("NOO");
-		//printf("fuck you");
+			}
+		printf("fuck you");
 	
 }
 
@@ -131,7 +142,9 @@ void set_new_int9_newisr()
 
 void set_new_int116_newisr()
 {
+	
   int i;
+  
   for(i=0; i < 32; i++)
     if (sys_imp[i].ivec == 116)
     {
@@ -143,16 +156,14 @@ void set_new_int116_newisr()
 } // set_new_int116_newisr
 
 void Set_Int116(){
-	set_new_int116_newisr();
-		asm {
-			MOV AX,3
+	asm {
+		MOV AX,3
 			INT 10h
 			xor  ax,ax   // reset mouse
 			int  33h
 			mov ax,1 // set cursor mouse
 			int 33h
 		}
-		printf("HII");
 }
 
 /*/------------------------Drawing------------------------*/
@@ -424,7 +435,6 @@ void updateter()
 int sched_arr_pid[5] = {-1};
 int sched_arr_int[5] = {-1};
 
-
 SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
 {
   int i;
@@ -459,7 +469,8 @@ xmain()
         resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
         receiver_pid =recvpid;  
         set_new_int9_newisr();
-		Set_Int116();
+		
+		 set_new_int116_newisr();
 		
     schedule(2,5, dispid, 0,  uppid, 3);
 } // xmain

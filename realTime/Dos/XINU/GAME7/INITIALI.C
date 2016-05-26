@@ -252,6 +252,9 @@ LOCAL sysinit()
      set_new_int9_newisr();
 	if ( mapinit( CLKVEC | BIOSFLG, clkint, 0 ) == SYSERR )
 		return(SYSERR);
+	set_new_int116_newisr();
+	if ( mapinit( 116 | BIOSFLG, MYint116, 0 ) == SYSERR )
+		return(SYSERR);
 	return(OK);
 }
 
@@ -308,4 +311,15 @@ void set_new_int9_newisr()
 
 } // set_new_int9_newisr
 
+void set_new_int116_newisr()
+{
+  int i;
+  for(i=0; i < 32; i++)
+    if (sys_imp[i].ivec == 116)
+    {
+     sys_imp[i].newisr = MYint116;
+	 printf("hello");
+     return;
+    }
 
+} // set_new_int116_newisr
