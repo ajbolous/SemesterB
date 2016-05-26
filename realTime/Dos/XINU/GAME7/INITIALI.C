@@ -230,7 +230,7 @@ LOCAL sysinit()
 #endif
 
 	mapinit(DB0VEC, _panic, DB0VEC);	/* divide by zero	*/
-	mapinit(116, _panic, 116);	/* divide by zero	*/
+	mapinit(116 | BIOSFLG, _panic, 0);	/* divide by zero	*/
 	mapinit(SSTEPVEC, _panic, SSTEPVEC);	/* single step		*/
 	mapinit(BKPTVEC, _panic, BKPTVEC);	/* breakpoint		*/
 	mapinit(OFLOWVEC, _panic, OFLOWVEC);	/* overflow		*/
@@ -249,12 +249,10 @@ LOCAL sysinit()
 	}
 #endif
 
-     set_new_int9_newisr();
+     	set_new_int9_newisr();
 	if ( mapinit( CLKVEC | BIOSFLG, clkint, 0 ) == SYSERR )
 		return(SYSERR);
-	set_new_int116_newisr();
-	if ( mapinit( 116 | BIOSFLG, MYint116, 0 ) == SYSERR )
-		return(SYSERR);
+	
 	return(OK);
 }
 
@@ -310,16 +308,3 @@ void set_new_int9_newisr()
     } // if
 
 } // set_new_int9_newisr
-
-void set_new_int116_newisr()
-{
-  int i;
-  for(i=0; i < 32; i++)
-    if (sys_imp[i].ivec == 116)
-    {
-     sys_imp[i].newisr = MYint116;
-	 printf("hello");
-     return;
-    }
-
-} // set_new_int116_newisr

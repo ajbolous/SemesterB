@@ -1,11 +1,9 @@
 /* game.c - xmain, prntr */
-
 #include <conf.h>
 #include <kernel.h>
 #include <io.h>
 #include <bios.h>
-#include "game7b.h"
-//extern SYSCALL  sleept(int);
+
 extern struct intmap far *sys_imp;
 /*------------------------------------------------------------------------
  *  xmain  --  example of 2 processes executing the same code concurrently
@@ -56,38 +54,31 @@ int down=1;
 
 INTPROC MYint116(int mdevno)
 {
-	int x,y;
-asm{
+		asm{
 			PUSH AX
 			MOV AX,5
-				INT 33H
-				MOV  mousePressed,AX
+			INT 33H
+			MOV  mousePressed,AX
 				
-				MOV AX,3
-				INT 33H
+			MOV AX,3
+			INT 33H
 				
-				MOV WORD PTR x ,CX	
-				MOV WORD PTR y,DX
+			MOV WORD PTR mousePosition.x ,CX	
+			MOV WORD PTR mousePosition.y,DX
 
-				POP AX
+			POP AX
 		}
-		mousePosition.x=x;
-		mousePosition.y=y;
 		if(mousePressed& 1==1)
 		{
 			mouseFlag=1; // if mouseFlag=1 then the player can throw the ball
-			printf("FUCKK %d %d ",mousePosition.x,mousePosition.y);
 		}
 		
-			else if(mouseFlag==1&&get==1) // if the player can throw the ball and the ball with player
-			{
-				mouseFlag=0;
+		else if(mouseFlag==1&&get==1) // if the player can throw the ball and the ball with player
+		{
+			mouseFlag=0;
 			//mouseCounter=0;
-			//	throw=1;
-			printf("NOO");
-			}
-		printf("fuck you");
-	
+		//	throw=1;
+		}	
 }
 
 
@@ -149,7 +140,6 @@ void set_new_int116_newisr()
     if (sys_imp[i].ivec == 116)
     {
      sys_imp[i].newisr = MYint116;
-	 printf("hello");
      return;
     }
 
@@ -345,16 +335,14 @@ void displayer( void )
 	int i,j;
 	while (1)
          {
-            receive();
-			for(i=5;i<ROW;i++)
-				for(j=0;j<COL;j++)
-				{
-					
-					moveCursor(j,i,display_draft[i][j],display_attrb[i][j]);
-				}
-					
-				
-         } //while
+        receive();
+	for(i=5;i<ROW;i++)
+	for(j=0;j<COL;j++)
+		{			
+		moveCursor(j,i,display_draft[i][j],display_attrb[i][j]);
+	}	
+	printf("Mouse:%d,%d",mousePosition.x,mousePosition.y);		
+     } //while
 } // prntr
 
 void receiver()// 
@@ -462,15 +450,14 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
 xmain()
 {
         int uppid, dispid, recvpid;
+		set_new_int9_newisr();
+		set_new_int116_newisr();
 		Set_Int116();
 
         resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );
         resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
         resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
         receiver_pid =recvpid;  
-        set_new_int9_newisr();
-		
-		 set_new_int116_newisr();
-		
-    schedule(2,5, dispid, 0,  uppid, 3);
+    
+		schedule(2,5, dispid, 0,  uppid, 3);
 } // xmain
