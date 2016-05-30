@@ -5,6 +5,7 @@
 #include <bios.h>
 
 extern struct intmap far *sys_imp;
+int	(*Int8Save)();
 /*------------------------------------------------------------------------
  *  xmain  --  example of 2 processes executing the same code concurrently
  *------------------------------------------------------------------------
@@ -22,66 +23,121 @@ typedef struct point{
 	int x;
 	int y;
 }POINT;
+typedef struct mouse{
+	int x;
+	int y;
+	int isPressed;
+	int counter;
+}MOUSE;
 
+typedef struct time{
+	int hour;
+	int min;
+	int sec;
+	int counter;
+}TIME;
 //SYSTEM PARAMETERS
 int receiver_pid;
 int gcycle_length;
 int gno_of_pids;
 int point_in_cycle;//taderot ha7lafat tahle5em
 extern struct intmap far *sys_imp;
-//int	(*Int8Save)();
+int	(*Int8Save)();
 char display[2001];
 char ch_arr[2048];
 int rear=-1;
 int front = -1;
-//SYSTEM PARAMETERS
+//BALL AND PLAYER
+
 char display_draft[ROW][COL];
 char display_attrb[ROW][COL];
-//MOUSE MOUSE MOUSE
- POINT mousePosition;
- POINT ball_position;
+POINT ball_pos;
+POINT ball_position;
+POINT Basket_pos;
 int player_position;
-int mousePressed = 0;
-int mouseFlag=0;
-int get=1;
-int mouseCounter=0;
-int throw;
+
 //MOUSE MOUSE MOUSE
+MOUSE mouse;
+int mouseFlag=0;
+int get=0;
+int throw;
 int down=1;
- POINT ball_pos;
+// TIME TIME TI<E
+TIME time;
+int* minM;//current minute
+int* secM;//current second
+int level_time = 50 * 18;// the time of the level
+int stop=0;
+int isThrowing=0;
+int throwingPower;
+int mouseDown=0;
+int ChangeDirectionX=1;
+int ChangeDirectionY=1;
+int bouncing=1;
+int level=1;
+int Score=0;
 /*----------------------------------------Interrupts-------------------------*/
 /*---------------------------------------------------------------------------*/
-
+INTPROC MYint8(int mdevno)
+{
+	if(mouseFlag==1)
+	{
+		mouse.counter++;
+	}
+	
+	Int8Save();
+}
+void Set_Int8(){
+	int i;
+	for(i=0; i < 32; i++)
+		if (sys_imp[i].ivec == 8)
+		{
+			Int8Save = sys_imp[i].newisr;
+			sys_imp[i].newisr = MYint8;
+			return;
+		}
+}
 INTPROC MYint116(int mdevno)
 {
+	int c =0 ;
 		asm{
 			PUSH AX
-			MOV AX,5
-			INT 33H
-			MOV  mousePressed,AX
-				
+			
+			
 			MOV AX,3
 			INT 33H
-				
-			MOV WORD PTR mousePosition.x ,CX	
-			MOV WORD PTR mousePosition.y,DX
+			
+			
+			
+			MOV AX,5
+			MOV BX,0
+			INT 33H
+			
+			MOV WORD PTR mouse.isPressed,AX 
+			MOV WORD PTR mouse.x ,CX	
+			MOV WORD PTR mouse.y,DX
 
 			POP AX
 		}
-		if(mousePressed& 1==1)
-		{
-			mouseFlag=1; // if mouseFlag=1 then the player can throw the ball
-		}
 		
-		else if(mouseFlag==1&&get==1) // if the player can throw the ball and the ball with player
+		if(mouse.isPressed & 1 ==1 && get==1)//if the player catch the ball and pressing left mouse button
+		{
+			mouseFlag=1;//if the mouseFlag=1 then the player can throw the ball else the ball is on the ground  
+			
+
+		}
+
+		else if(mouseFlag==1 && get==1 ) //if the player relesae the mouse then he can throw the ball
 		{
 			mouseFlag=0;
-			//mouseCounter=0;
-		//	throw=1;
-		}	
+			mouse.counter=0;
+			throw=1;	
+			
+		}		
+
+		
+		
 }
-
-
 
 INTPROC new_int9(int mdevno)
 {
@@ -156,6 +212,11 @@ void Set_Int116(){
 		}
 }
 
+
+
+/*/----------------------------CLOCK------------------------*/
+
+
 /*/------------------------Drawing------------------------*/
 /*---------------------------------------------------------*/
 void clear_display()
@@ -175,7 +236,8 @@ void clear_display()
 	}
 }
 
-void DrawBanner(int x,int y){
+void DrawBanner(int x,int y)
+{
 
 }
 
@@ -272,11 +334,7 @@ void drawBasket(int x,int y)
 		display_draft[x-3][COL-7-j] = '-';    // blank
 	  display_attrb[x-3][COL-7-j]=96;
 	}
-			    for(j=0; j < 1; j++)
-	{
-		display_draft[x-2][COL-8-j] = '-';    // blank
-	  display_attrb[x-2][COL-8-j]=96;
-	}
+	
 }
 
 void drawBall(int x,int y)
@@ -304,7 +362,7 @@ void drawBall(int x,int y)
  *  prntr  --  print a character indefinitely
  *------------------------------------------------------------------------
  */
-
+ 
 
  void moveCursor(int x,int y,char mychar,char color){
 	 int position = y*80 + x;
@@ -328,7 +386,15 @@ void drawBall(int x,int y)
 		 mov es:[di],ax
 	 }
  }
+void throw_ball(int x, int y)
+{
 
+	ball_pos.x+=x;
+	if(ball_pos.y <72)
+	ball_pos.y  +=y;
+	
+
+}
  
 void displayer( void )
 {
@@ -341,7 +407,8 @@ void displayer( void )
 		{			
 		moveCursor(j,i,display_draft[i][j],display_attrb[i][j]);
 	}	
-	printf("Mouse:%d,%d",mousePosition.x,mousePosition.y);		
+	
+	
      } //while
 } // prntr
 
@@ -359,22 +426,8 @@ void receiver()//
 
 } //  receiver
 
-
-void updateter()
-{
-
- 
-  int i,j;           
-  char ch;
-  ball_pos.x = 19;
-	ball_pos.y=50;
-   player_position=35;
-  while(1)
-  {
-
-   receive();
-    clear_display();
-        if(ball_pos.x==22)
+void bounceBall(){
+	 if(ball_pos.x==22)
 			down=0;
 			else
 			if(ball_pos.x==19)
@@ -383,6 +436,101 @@ void updateter()
 			ball_pos.x++;
 			else
 			ball_pos.x--;
+}
+void updateter()
+{
+  int i,j;           
+  char ch;
+  int limit;
+  int tempCount;
+ 
+   if(level=1)
+	{
+	player_position =50;
+	ball_pos.x = 19;
+	ball_pos.y=50;
+	Basket_pos.x=17;
+	Basket_pos.y=65;
+	//wall_pos.x=1;
+	//wall_pos.y=60;
+	}
+  while(1)
+  {
+
+	receive();
+	clear_display();
+ 
+ 
+ if(throw==0) //if variable throw=0 that's mean that the ball wasn't thrwon yet.
+ {
+		if(get==1) // the player catch the ball
+		{
+			bouncing=0;
+			ChangeDirectionX=1;
+			ChangeDirectionY=1;
+			ball_pos.y=player_position;
+				ball_pos.x=18;
+			if(mouseFlag==1) // mouseflag=1 -> the left button pressed.
+			{
+				
+				tempCount=mouse.counter/4;
+				for(i=0;i<tempCount;i++)
+				{
+					
+					display_draft[23-i][mouse.x/8 -1]='*';
+					display_attrb[23-i][mouse.x/8 -1]=64;
+				}
+					
+				
+			}
+			
+		}
+			if(get==0)//ball on the ground
+			{
+				
+			bouncing=1;
+			bounceBall();
+			}
+ }
+		
+		else/////////////////////////////////////// if throw=1 =>the ball is thrown//////////////////////////
+		{
+			bouncing=0; // we stop the bounce action , because the ball has throwen.
+			limit=18-tempCount;
+			if(limit<=2)
+				limit=2;
+			if(ball_pos.x ==limit) // we change the direction of the ball 
+				ChangeDirectionX=-1;//down
+			if(ball_pos.y ==72)// if we arrive to max height
+				ChangeDirectionY=0;
+
+			if(ball_pos.x == 22)// rebounce the ball
+			{
+				get=0;
+				throw=0;
+				ChangeDirectionX = 1;
+			}
+			if(ChangeDirectionX==-1 && (ball_pos.y >=68 && ball_pos.y <=76)  && (ball_pos.x == Basket_pos.x || ball_pos.x==Basket_pos.x || ball_pos.x==Basket_pos.x))
+			{
+				throw=0;
+				
+				ChangeDirectionX = 1;
+				for(i=0;i<10;i++)
+				{
+					sound(250*i);
+					delay(20);
+					nosound();
+				} 
+				Score++;
+			}
+			throw_ball(-ChangeDirectionX,ChangeDirectionY); //throw the ball when the player release the mouse
+			bouncing=1;
+
+		}
+			
+	
+	
+		
    while(front != -1)
    {
      ch = ch_arr[front];
@@ -400,6 +548,8 @@ void updateter()
        if (player_position <= 72 )
          player_position++;
   }
+  if(player_position==ball_pos.y)
+	  get=1;
  
        // if
    } // while(front != -1)
@@ -412,9 +562,9 @@ void updateter()
 	//Draw the Player and the basket and the Ball
 	
 	drawPlayer(player_position);
-	drawBasket(15,65);
-    drawBall(ball_pos.x,ball_pos.y);
-	//drawPower(10,60);
+	drawBall(ball_pos.x,ball_pos.y);
+	drawBasket(Basket_pos.x,Basket_pos.y);
+	
 	DrawBanner(0,0);
   } // while(1)
 
@@ -453,7 +603,7 @@ xmain()
 		set_new_int9_newisr();
 		set_new_int116_newisr();
 		Set_Int116();
-
+		Set_Int8();
         resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );
         resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
         resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
