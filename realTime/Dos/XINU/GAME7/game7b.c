@@ -123,15 +123,15 @@ INTPROC MYint116(int mdevno)
 		if(mouse.isPressed & 1 ==1 && get==1)//if the player catch the ball and pressing left mouse button
 		{
 			mouseFlag=1;//if the mouseFlag=1 then the player can throw the ball else the ball is on the ground  
-			
+			mouse.counter=0;
 
 		}
 
 		else if(mouseFlag==1 && get==1 ) //if the player relesae the mouse then he can throw the ball
 		{
 			mouseFlag=0;
-			mouse.counter=0;
-			throw=1;	
+			throw=1;
+			
 			
 		}		
 
@@ -388,7 +388,7 @@ void drawBall(int x,int y)
  }
 void throw_ball(int x, int y)
 {
-
+	
 	ball_pos.x+=x;
 	if(ball_pos.y <72)
 	ball_pos.y  +=y;
@@ -402,7 +402,7 @@ void displayer( void )
 	while (1)
          {
         receive();
-	for(i=5;i<ROW;i++)
+	for(i=0;i<ROW;i++)
 	for(j=0;j<COL;j++)
 		{			
 		moveCursor(j,i,display_draft[i][j],display_attrb[i][j]);
@@ -461,7 +461,7 @@ void updateter()
 	clear_display();
  
  
- if(throw==0) //if variable throw=0 that's mean that the ball wasn't thrwon yet.
+ if(throw==0) //if variable throw=0 that's mean that the ball wasn't thrwon yet and the player catch it
  {
 		if(get==1) // the player catch the ball
 		{
@@ -473,7 +473,7 @@ void updateter()
 			if(mouseFlag==1) // mouseflag=1 -> the left button pressed.
 			{
 				
-				tempCount=mouse.counter/4;
+				tempCount=mouse.counter/3;
 				for(i=0;i<tempCount;i++)
 				{
 					
@@ -493,7 +493,7 @@ void updateter()
 			}
  }
 		
-		else/////////////////////////////////////// if throw=1 =>the ball is thrown//////////////////////////
+		else   /////////////////////////////////////// if throw=1 =>the ball is thrown//////////////////////////
 		{
 			bouncing=0; // we stop the bounce action , because the ball has throwen.
 			limit=18-tempCount;
@@ -501,7 +501,7 @@ void updateter()
 				limit=2;
 			if(ball_pos.x ==limit) // we change the direction of the ball 
 				ChangeDirectionX=-1;//down
-			if(ball_pos.y ==72)// if we arrive to max height
+			if(ball_pos.y ==COL)// if we arrive to max height
 				ChangeDirectionY=0;
 
 			if(ball_pos.x == 22)// rebounce the ball
@@ -512,7 +512,7 @@ void updateter()
 			}
 			if(ChangeDirectionX==-1 && (ball_pos.y >=68 && ball_pos.y <=76)  && (ball_pos.x == Basket_pos.x || ball_pos.x==Basket_pos.x || ball_pos.x==Basket_pos.x))
 			{
-				throw=0;
+				throw=0; // the player catch the ball after he git score 
 				
 				ChangeDirectionX = 1;
 				for(i=0;i<10;i++)
@@ -524,7 +524,7 @@ void updateter()
 				Score++;
 			}
 			throw_ball(-ChangeDirectionX,ChangeDirectionY); //throw the ball when the player release the mouse
-			bouncing=1;
+			bouncing=1;// if the ball didn't enter into the basket after throwing
 
 		}
 			
