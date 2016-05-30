@@ -23,6 +23,7 @@ typedef struct point{
 	int x;
 	int y;
 }POINT;
+
 typedef struct mouse{
 	int x;
 	int y;
@@ -75,7 +76,10 @@ int ChangeDirectionX=1;
 int ChangeDirectionY=1;
 int bouncing=1;
 int level=1;
-int Score=0;
+int Score = 0;
+int factorX = 1;
+int factorY = 1;
+
 /*----------------------------------------Interrupts-------------------------*/
 /*---------------------------------------------------------------------------*/
 INTPROC MYint8(int mdevno)
@@ -97,18 +101,15 @@ void Set_Int8(){
 			return;
 		}
 }
+
 INTPROC MYint116(int mdevno)
 {
 	int c =0 ;
 		asm{
-			PUSH AX
-			
-			
+			PUSH AX			
 			MOV AX,3
 			INT 33H
-			
-			
-			
+
 			MOV AX,5
 			MOV BX,0
 			INT 33H
@@ -118,8 +119,12 @@ INTPROC MYint116(int mdevno)
 			MOV WORD PTR mouse.y,DX
 
 			POP AX
+
 		}
-		
+
+
+		if (mouse.isPressed == 1) {
+			}
 		if(mouse.isPressed & 1 ==1 && get==1)//if the player catch the ball and pressing left mouse button
 		{
 			mouseFlag=1;//if the mouseFlag=1 then the player can throw the ball else the ball is on the ground  
@@ -130,13 +135,16 @@ INTPROC MYint116(int mdevno)
 		else if(mouseFlag==1 && get==1 ) //if the player relesae the mouse then he can throw the ball
 		{
 			mouseFlag=0;
+			factorX = (mouse.x / 8 - player_position)/10;
+			factorY = (19 - mouse.y/8)/8;
+
+			if (((19 - mouse.y / 8)!=0) && factorY == 0)
+				factorY = 1;
+			printf("(%d %d)", factorX, factorY);
 			throw=1;
 			
 			
-		}		
-
-		
-		
+		}	
 }
 
 INTPROC new_int9(int mdevno)
@@ -389,11 +397,9 @@ void drawBall(int x,int y)
 void throw_ball(int x, int y)
 {
 	
-	ball_pos.x+=x;
-	if(ball_pos.y <72)
-	ball_pos.y  +=y;
-	
-
+	ball_pos.x+= x;
+	if (ball_pos.y < 72)
+		ball_pos.y += y;
 }
  
 void displayer( void )
@@ -523,7 +529,7 @@ void updateter()
 				} 
 				Score++;
 			}
-			throw_ball(-ChangeDirectionX,ChangeDirectionY); //throw the ball when the player release the mouse
+			throw_ball(-ChangeDirectionX*factorY,ChangeDirectionY*factorX); //throw the ball when the player release the mouse
 			bouncing=1;// if the ball didn't enter into the basket after throwing
 
 		}
