@@ -67,8 +67,6 @@ int throw;
 int down=1;
 // TIME TIME TI<E
 TIME time;
-int* minM;//current minute
-int* secM;//current second
 int status=0;
 int isThrowing=0;
 int throwingPower;
@@ -76,14 +74,16 @@ int mouseDown=0;
 int ChangeDirectionX=1;
 int ChangeDirectionY=1;
 int bouncing=1;
-int level=3;
+int level=1;
 int TimeUp=0;
-int LevelTime;
+int LevelTime=40*18.3;
 int Score = 0;
 int factorX = 1;
 int factorY = 1;
 int Basket =1;
 int wall_flag=0;
+
+ int uppid, dispid, recvpid;
 /*----------------------------------------Interrupts-------------------------*/
 /*---------------------------------------------------------------------------*/
 INTPROC MYint8(int mdevno)
@@ -243,13 +243,14 @@ void print(char* str,int len,int x,int y)
 	int i;
 	for(i=0;i<len;i++)
 	{
-		
 		display_draft[x][y]=str[i];
 		display_attrb[x][y]=64;
 		y++;
 	}
 	
 }
+
+
 
 /*/------------------------Drawing------------------------*/
 /*---------------------------------------------------------*/
@@ -280,17 +281,9 @@ void DrawBanner()
 		print(buffer,8,2,0);
 		sprintf(buffer,"Time :%d",(int)(LevelTime/18.3));
 		print(buffer,8,3,0);
-		if(status==1)
-		{
+		
+		
 			
-		 print("YouLOSE",7,40,30);
-		}
-		else 
-			if(status==2)
-		{
-			
-		     print("Congratulations",15,30,40);
-		}
 		
 }
 
@@ -425,8 +418,34 @@ void drawWall(int x ,int y){
  *  prntr  --  print a character indefinitely
  *------------------------------------------------------------------------
  */
- 
-
+ //-----------------------------------Move---------------------------------//
+void moveBasket()
+{
+	if(Basket_pos.x==13)
+			Basket=0;
+			else
+			if(Basket_pos.x==20)
+			Basket=1;
+			if(Basket==0)
+			Basket_pos.x++;
+			else
+			Basket_pos.x--;
+		
+}
+void moveWall()
+{
+	if(wall_pos.x==1)
+	
+			wall_flag=0;
+			else
+			if(wall_pos.x==15)
+			wall_flag=1;
+			if(wall_flag==0)
+			wall_pos.x++;
+			else
+			wall_pos.x--;
+		
+}
  void moveCursor(int x,int y,char mychar,char color){
 	 int position = y*80 + x;
 	 int mem_pos = position*2;
@@ -472,9 +491,48 @@ void displayer( void )
 	
      } //while
 } // prntr
+
+
+
+//--------------------------------------------------End Game------------------------------------//
 void gameOver()
 {
-	
+		status=1;
+		Score=0;
+		drawPlayer(player_position);
+	drawBall(ball_pos.x,ball_pos.y);
+	drawBasket(Basket_pos.x,Basket_pos.y);
+		 print("Game Over",9,12,30);
+		kill(uppid);
+		kill(dispid);
+		kill(recvpid);
+		
+		
+		
+		
+}
+void exitGame()
+{
+	drawPlayer(player_position);
+	drawBall(ball_pos.x,ball_pos.y);
+	drawBasket(Basket_pos.x,Basket_pos.y);
+		 print("--->YOU *_* WIN<---",19,12,30);
+		kill(uppid);
+		kill(dispid);
+		kill(recvpid);
+		
+}
+void Hurt()
+{
+	drawPlayer(player_position);
+	drawBall(ball_pos.x,ball_pos.y);
+	drawBasket(Basket_pos.x,Basket_pos.y);
+		 print("oOoOoPs!!",9,12,30);
+		 print("-|- Game Over -|-",17,13,27);
+		kill(uppid);
+		kill(dispid);
+		kill(recvpid);
+		
 }
 void receiver()// 
 {
@@ -504,11 +562,11 @@ void bounceBall(){
 
 void updateter()
 {
-  int i,j;           
-  char ch;
-  int limit;
-  int tempCount;
-player_position =50;
+	int i,j;           
+	char ch;
+	int limit;
+	int tempCount;
+	player_position =50;
 	ball_pos.x = 19;
 	ball_pos.y=50;
 	Basket_pos.x=17;
@@ -516,32 +574,8 @@ player_position =50;
 
 	wall_pos.x=1;
 	wall_pos.y=60;
-   if(level=1)
-	{
+  
 	
-	LevelTime=40*18.3;
-	
-	}
-	if(level==2)
-	{
-	
-	LevelTime=40*18.3;
-	Score=0;
-	
-	}
-	if(level==3)
-	{
-		Score=0;
-		LevelTime=60*18.3;
-		
-		
-	}
-	if(level==4)
-	{
-		Score=0;
-		LevelTime=60*18.3;
-		drawWall(wall_pos.x,wall_pos.y);
-	}
   while(1)
   {
 
@@ -580,39 +614,46 @@ player_position =50;
 			bounceBall();
 			}if(LevelTime==0&&Score<2)
 	{
+		
 		gameOver();
-		status=1;
 	}
 	else
 		if(LevelTime==0&&Score>=2)
 	{
 		status=2;
+		
+			
+		     print("Congratulations",15,12,30);
+			
+			 
+			 
 		level++;
+		
+		LevelTime = (level == 4? 60:40)*18.3;
+		Score=0;
 	}
 	
 	if(level>=3)
 	{
-		if(Basket_pos.x==17)
-			Basket=0;
-			else
-			if(Basket_pos.x==18)
-			Basket=1;
-			if(Basket==0)
-			Basket_pos.x++;
-			else
-			Basket_pos.x--;
+		moveBasket();
 	}
-	if (level>=4)   
+	if (level==4)   
 			{
-		    if(wall_pos.x==3)
-			wall_flag=0;
-			else
-			if(wall_pos.x==13)
-			wall_flag=1;
-			if(wall_flag==0)
-			wall_pos.x++;
-			else
-			wall_pos.x--;
+		    moveWall();
+			if(ball_pos.x==wall_pos.x||ball_pos.y==wall_pos.y)
+			{
+				
+			}
+				
+			
+			if(player_position==wall_pos.x)
+		{
+			Hurt();
+		}
+			}
+			if(level==5)
+			{
+				exitGame();
 			}
  }
 		
@@ -620,21 +661,36 @@ player_position =50;
 		{
 			bouncing=0; // we stop the bounce action , because the ball has throwen.
 			limit=18-tempCount;
+			
+			moveBasket();
+			
+			moveWall();
+			
+			
 			if(limit<=2)
 				limit=2;
 			if(ball_pos.x ==limit) // we change the direction of the ball 
 				ChangeDirectionX=-1;//down
-			if(ball_pos.y ==COL)
+			if(ball_pos.y ==72)
 				ChangeDirectionY=0;
-
+			
 			if(ball_pos.x == 22)// rebounce the ball
 			{
 				get=0;
 				throw=0;
 				ChangeDirectionX = 1;
 			}
-			
-			if(ChangeDirectionX==-1 && (ball_pos.y >=68 && ball_pos.y <=76)  && (ball_pos.x == Basket_pos.x ))
+			if(ball_pos.x >= wall_pos.x+2 && ball_pos.x <= (wall_pos.x+20) &&(ball_pos.y==wall_pos.y+1) && level>=3)//there is problem with the place of the wall
+		
+		{
+			print("FUCK",4,5,30);
+			ChangeDirectionY=0;
+		}
+		if(player_position==wall_pos.x||player_position==wall_pos.y)
+		{
+			print("oOoOoPs",7,12,30);
+		}
+			if(ChangeDirectionX==-1 && (ball_pos.y >=68 && ball_pos.y <=76)  && (ball_pos.x == Basket_pos.x || ball_pos.x==Basket_pos.x || ball_pos.x==Basket_pos.x))
 			{
 				throw=0; // the player catch the ball after he git score 
 				
@@ -647,7 +703,7 @@ player_position =50;
 				} 
 				Score++;
 			}
-			throw_ball(-ChangeDirectionX,ChangeDirectionY); //throw the ball when the player release the mouse
+			throw_ball(-ChangeDirectionX*factorY,ChangeDirectionY*factorX); //throw the ball when the player release the mouse
 			bouncing=1;// if the ball didn't enter into the basket after throwing
 
 		}
@@ -688,7 +744,11 @@ player_position =50;
 	drawPlayer(player_position);
 	drawBall(ball_pos.x,ball_pos.y);
 	drawBasket(Basket_pos.x,Basket_pos.y);
-		//drawWall(wall_pos.x,wall_pos.y);
+	if(level==4)
+	{
+		drawWall(wall_pos.x,wall_pos.y);
+		
+	}
 	DrawBanner();
   } // while(1)
 
@@ -723,7 +783,7 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
 
 xmain()
 {
-        int uppid, dispid, recvpid;
+       
 		set_new_int9_newisr();
 		set_new_int116_newisr();
 		Set_Int116();
