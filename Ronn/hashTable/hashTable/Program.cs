@@ -24,7 +24,9 @@ namespace hashTable
         {
 
             this.n = 2 * n;
-            this.arr = new int[n];
+            this.arr = new int[this.n];
+            for (int i = 0; i < this.n; i++)
+                arr[i] = -1;//initialiaze the array with -1 
 
         }
 
@@ -57,6 +59,9 @@ namespace hashTable
 
             if (this.arr[hash_func(num, n)] == -1)
                 this.arr[hash_func(num, n)] = num;
+            else
+                if (this.arr[hash_func(num, n)] == num)
+                return;
 
             else
             {
@@ -85,11 +90,10 @@ namespace hashTable
     class array_hash_table2 : array_hash_table
     {
         private ifunc new_hash_fun;
-        private int v;
 
-        public array_hash_table2(int v, ifunc new_hash_fun) : base()
+       
+        public array_hash_table2(int n, ifunc new_hash_fun) : base(n) //have to call the constructor of the array_hash_table 2 that's the problem
         {
-            this.v = v;
             this.new_hash_fun = new_hash_fun;
         }
     }
@@ -137,6 +141,7 @@ namespace hashTable
             Console.WriteLine("\nIs member {0} = {1}", 23L, My_table2.is_member(23));
             Console.WriteLine("\nIs member {0} = {1}", 39L, My_table2.is_member(39));
             Console.WriteLine("\nIs member {0} = {1}", 40L, My_table2.is_member(40));
+            Console.ReadLine();
 
             return 0;
 
