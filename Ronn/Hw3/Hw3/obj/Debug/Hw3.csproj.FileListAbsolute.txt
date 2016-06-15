@@ -1,1 +1,6 @@
 E:\SemesterB\Ronn\Hw3\Hw3\bin\Debug\Hw3.exe.config
+E:\SemesterB\Ronn\Hw3\Hw3\obj\Debug\Hw3.csprojResolveAssemblyReference.cache
+E:\SemesterB\Ronn\Hw3\Hw3\bin\Debug\Hw3.exe
+E:\SemesterB\Ronn\Hw3\Hw3\bin\Debug\Hw3.pdb
+E:\SemesterB\Ronn\Hw3\Hw3\obj\Debug\Hw3.exe
+E:\SemesterB\Ronn\Hw3\Hw3\obj\Debug\Hw3.pdb

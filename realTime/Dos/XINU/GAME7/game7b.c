@@ -74,7 +74,7 @@ int mouseDown=0;
 int ChangeDirectionX=1;
 int ChangeDirectionY=1;
 int bouncing=1;
-int level=1;
+int level=4;
 int TimeUp=0;
 int LevelTime=40*18.3;
 int Score = 0;
@@ -640,10 +640,7 @@ void updateter()
 	if (level==4)   
 			{
 		    moveWall();
-			if(ball_pos.x==wall_pos.x||ball_pos.y==wall_pos.y)
-			{
-				
-			}
+			
 				
 			
 			if(player_position==wall_pos.x)
@@ -661,11 +658,14 @@ void updateter()
 		{
 			bouncing=0; // we stop the bounce action , because the ball has throwen.
 			limit=18-tempCount;
-			
+			if(level>=3)
+			{
 			moveBasket();
-			
+			}
+			if(level==4)
+			{
 			moveWall();
-			
+			}
 			
 			if(limit<=2)
 				limit=2;
@@ -680,15 +680,16 @@ void updateter()
 				throw=0;
 				ChangeDirectionX = 1;
 			}
-			if(ball_pos.x >= wall_pos.x+2 && ball_pos.x <= (wall_pos.x+20) &&(ball_pos.y==wall_pos.y+1) && level>=3)//there is problem with the place of the wall
+			if(ball_pos.x >= wall_pos.x+2 && ball_pos.x <= (wall_pos.x+20) &&(ball_pos.y==wall_pos.y+1) && level==4)//there is problem with the place of the wall
 		
 		{
-			print("FUCK",4,5,30);
+			
 			ChangeDirectionY=0;
 		}
-		if(player_position==wall_pos.x||player_position==wall_pos.y)
+		if((player_position==wall_pos.x||player_position==wall_pos.y)&&level==4)
 		{
 			print("oOoOoPs",7,12,30);
+			
 		}
 			if(ChangeDirectionX==-1 && (ball_pos.y >=68 && ball_pos.y <=76)  && (ball_pos.x == Basket_pos.x || ball_pos.x==Basket_pos.x || ball_pos.x==Basket_pos.x))
 			{

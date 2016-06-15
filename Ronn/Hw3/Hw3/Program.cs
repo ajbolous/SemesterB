@@ -6,117 +6,152 @@ using System.Threading.Tasks;
 
 namespace Matrix_Type
 {
-    public class Matrix<Type>
+    public delegate object bin_op(object x,object y);
+    public class Matrix<T>
     {
         int n;// the size of the matrix
-        private object[][] mat;//matrix n*n
-        
+        private T[,] mat;//matrix n*n
+        public bin_op add;
+        public bin_op sub;
+        public bin_op mul;
         public Matrix(int n, bin_op add, bin_op sub, bin_op mul)
         {
             this.n = n;
+            this.mat = new T[n, n];
+            this.add = add;
+            this.sub = sub;
+            this.mul = mul;
             
-
         }
         public int N { get { return n; } }
-        public object indexer(int i,int j)//indexer 
+        public T this[int i,int j]
         {
-            return this.mat[i][j];
+            get
+            {
+                
+                return mat[i,j];
+            }
+            set
+            {
+                mat[i,j] = (T)value;
+            }
         }
 
-        public static Matrix<Type> operator +(Matrix<Type> x, Matrix<Type> y)
+        public static Matrix<T> operator +(Matrix<T> x, Matrix<T> y)
         {
-            bin_op add;
-            int[,] m0 = x.indexer(i, i);
-            int[,] m1 = y._values;
-            int[,] newMatrix = add(m0, m1)/* add m0 and m1 */;
-            return new Matrix(newMatrix);
-        }
-    }
-    class bin_op
-    {
-        public static object[,] add(this object[,] matrix1, object[,] matrix2)
-        {
-            object[,] retorno = new object[n, n];
-            for (int i = 0; i < n; i++)
-            {
-                for (int j = 0; j < n; j++)
+            Matrix<T> z = new Matrix<T>(x.n,x.add,x.sub,x.mul);
+            
+            int i, j;
+            for (i = 0; i < x.n; i++)
+                for (j = 0; j < y.n; j++)
                 {
-                    retorno[i, j] = matrix1[i, j] + matrix2[i, j];
+                    z[i, j]= x.add((dynamic)x[i,j],(dynamic)y[i,j]);
+                   
+                }
+            return z;        
+
+        }
+       public static Matrix<T> operator *(Matrix<T> x ,Matrix<T> y)
+        {
+            Matrix<T> z = new Matrix<T>(x.n, x.add, x.sub, x.mul);
+
+            for (int i = 0; i <z.n; i++)
+            {
+                for (int j = 0; j < x.n; j++)
+                {
+                  
+                    for (int k = 0; k < y.n; k++) // OR k<b.GetLength(0)
+                        z[i, j] = x.add((dynamic)z[i, j] , x.mul((dynamic)x[i, k] , (dynamic)y[k, j]));
                 }
             }
-            return retorno;
+
+            return z;
         }
+        
+        public void print() // print a matrix
+        {
+            int i, j;
+            for (i = 0; i < n; i++)
+            {
+                for (j = 0; j < n; j++)
+                {
+                    Console.Write("{0}  ", mat[i,j]);
+                }
+                Console.WriteLine();
+            }
+        }
+
     }
+
     class Program
     {
-            public static object int_add(object x, object y)
-            {
-                int ix, iy, iz;
+        public static object int_add(object x, object y)
+        {
+            int ix, iy, iz;
 
-                ix = (int)x;
-                iy = (int)y;
-                iz = ix + iy;
-                return ((object)iz);
-            } // int_add
-
-
-            public static object int_sub(object x, object y)
-            {
-                int ix, iy, iz;
-
-                ix = (int)x;
-                iy = (int)y;
-                iz = ix - iy;
-                return ((object)iz);
-            } // int_sub
+            ix = (int)x;
+            iy = (int)y;
+            iz = ix + iy;
+            return ((object)iz);
+        } // int_add
 
 
+        public static object int_sub(object x, object y)
+        {
+            int ix, iy, iz;
+
+            ix = (int)x;
+            iy = (int)y;
+            iz = ix - iy;
+            return ((object)iz);
+        } // int_sub
 
 
-            public static object int_mul(object x, object y)
-            {
-                int ix, iy, iz;
-
-                ix = (int)x;
-                iy = (int)y;
-                iz = ix * iy;
-                return ((object)iz);
-            } // int_mul
-
-            public static object double_add(object x, object y)
-            {
-                double dx, dy, dz;
-
-                dx = (double)x;
-                dy = (double)y;
-                dz = dx + dy;
-                return ((double)dz);
-            } // double_add
 
 
-            public static object double_sub(object x, object y)
-            {
-                double dx, dy, dz;
+        public static object int_mul(object x, object y)
+        {
+            int ix, iy, iz;
 
-                dx = (double)x;
-                dy = (double)y;
-                dz = dx - dy;
-                return ((double)dz);
-            } // double_sub
+            ix = (int)x;
+            iy = (int)y;
+            iz = ix * iy;
+            return ((object)iz);
+        } // int_mul
+
+        public static object double_add(object x, object y)
+        {
+            double dx, dy, dz;
+
+            dx = (double)x;
+            dy = (double)y;
+            dz = dx + dy;
+            return ((double)dz);
+        } // double_add
 
 
-            public static object double_mul(object x, object y)
-            {
-                double dx, dy, dz;
+        public static object double_sub(object x, object y)
+        {
+            double dx, dy, dz;
 
-                dx = (double)x;
-                dy = (double)y;
-                dz = dx * dy;
-                return ((double)dz);
-            } // double_mul
+            dx = (double)x;
+            dy = (double)y;
+            dz = dx - dy;
+            return ((double)dz);
+        } // double_sub
 
 
-        }
+        public static object double_mul(object x, object y)
+        {
+            double dx, dy, dz;
+
+            dx = (double)x;
+            dy = (double)y;
+            dz = dx * dy;
+            return ((double)dz);
+        } // double_mul
+
+
         static void Main(string[] args)
         {
             int n = 5, i, j;
@@ -141,12 +176,11 @@ namespace Matrix_Type
             Console.WriteLine("M1d + M2d:");
             M3d = M1d + M2d;
             M3d.print();
-            M3d = M1d * M2d;
+             M3d = M1d * M2d;
             Console.WriteLine("M1d * M2d:");
             M3d.print();
 
-            d = (double)M1d;
-            Console.WriteLine("\n(double)M1d = " + d);
+             
 
 
             Matrix<int> M1i = new Matrix<int>(n, int_add, int_sub, int_mul),
@@ -167,18 +201,18 @@ namespace Matrix_Type
             M2i.print();
 
             Console.WriteLine("M1i + M2i:");
-            M3i = M1i + M2i;
-            M3i.print();
+              M3i = M1i + M2i;
+             M3i.print();
             M3i = M1i * M2i;
             Console.WriteLine("M1i * M2i:");
             M3i.print();
-
-            k = (int)M1i;
-            Console.WriteLine("\n(int)M1i = " + k);
+            Console.ReadLine();
+            
 
         } // Main
-    
 
 
     }
-}
+    }
+
+
