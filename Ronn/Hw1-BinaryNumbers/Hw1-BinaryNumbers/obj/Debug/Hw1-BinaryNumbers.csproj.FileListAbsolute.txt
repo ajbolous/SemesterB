@@ -1,0 +1,6 @@
+E:\SemesterB\Ronn\Hw1-BinaryNumbers\Hw1-BinaryNumbers\bin\Debug\Hw1-BinaryNumbers.exe.config
+E:\SemesterB\Ronn\Hw1-BinaryNumbers\Hw1-BinaryNumbers\bin\Debug\Hw1-BinaryNumbers.exe
+E:\SemesterB\Ronn\Hw1-BinaryNumbers\Hw1-BinaryNumbers\bin\Debug\Hw1-BinaryNumbers.pdb
+E:\SemesterB\Ronn\Hw1-BinaryNumbers\Hw1-BinaryNumbers\obj\Debug\Hw1-BinaryNumbers.csprojResolveAssemblyReference.cache
+E:\SemesterB\Ronn\Hw1-BinaryNumbers\Hw1-BinaryNumbers\obj\Debug\Hw1-BinaryNumbers.exe
+E:\SemesterB\Ronn\Hw1-BinaryNumbers\Hw1-BinaryNumbers\obj\Debug\Hw1-BinaryNumbers.pdb
