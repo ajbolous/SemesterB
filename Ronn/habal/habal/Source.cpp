@@ -8,20 +8,24 @@ template<typename T>
 class Matrix {
 	
 private:
-	T**mat;
+	T **mat;
 	
 public:
 	int n;
 	function<T(T, T)> addF;
 	function<T(T, T)> subF;
 	function<T(T, T)> mulF;
-	Matrix(int n, function <T(T, T)> addFunc, function <T(T, T)> sub, function <T(T, T)> mul) {
+	Matrix(int n1, function <T(T, T)> addFunc, function <T(T, T)> sub, function <T(T, T)> mul) {
+		n = n1;
 		addF = addFunc;
 		subF = sub;
 		mulF = mul;
 		mat = new T*[n];
 		for (int i = 0; i < n; i++)
 			mat[i] = new T[n];
+		for (int i = 0; i < n; i++)
+			for (int j = 0; j < n; j++)
+				mat[i][j] = 0;
 
 
 	}
@@ -33,45 +37,45 @@ public:
 	{
 		return mat[x][y];
 	}
-	T set(const T& t, const int& x, const int& y)
+	void set(const T t, const int x, const int y)
 	{
-		data[x][y] = t;
+		mat[x][y] = t;
 	}
 	T& operator[](int index)//override operator []
 	{
 		for (int i = 0; i < n;i++)// for every col return a row
-		return mat[i];
+		return *mat[i];
 	}
 
-	void operator=(T temp)//override operator =
+	void operator=(const T& other)//override operator =
 	{
 		for (int i = 0; i < n; i++)
 			for (j = 0; j < n;j++)
-				mat[i][j] = temp;
+				mat.set(other,i,j);
 	}
 	friend Matrix operator +(Matrix<T> m1, Matrix <T> m2)
 	{
 		int i,j;
-		Matrix <T>temp=new Matrix<T>(m1.n,m1.addF,m1.subF,m1.mulF);
+		Matrix <T>temp= Matrix<T>(m1.n,m1.addF,m1.subF,m1.mulF);
 		for (i = 0; i < m1.n;i++)
 			for (j = 0; j< m2.n; j++)
-				temp[i][j] = m1.addF(m1[i][j], m2[i][j]);
+				temp.set(  m1.addF(m1.get(i,j), m2.get(i,j)),i,j);
 
 		return temp;
 	}
 	friend Matrix operator -(Matrix<T> m1, Matrix <T> m2)
 	{
 		int i, j;
-		Matrix<T> temp = new Matrix<T>(m1.n, m1.addF, m1.subF, m1.mulF);
+		Matrix<T> temp =  Matrix<T>(m1.n, m1.addF, m1.subF, m1.mulF);
 		for (i = 0; i < m1.n; i++)
 			for (j = 0; j < m2.n; j++)
-				temp[i][j] = m1.subF(m1[i][ j], m2[i][ j]);
+				temp.set ( m1.subF(m1[i][ j], m2[i][ j]),i,j);
 		
 			return temp;
 	}
 	friend Matrix operator *(Matrix<T> m1, Matrix<T> m2)
 	{
-		Matrix<T> temp=new Matrix<T>(m1.n,m1.addF,m1.subF,m1.mulF);
+		Matrix<T> temp= Matrix<T>(m1.n,m1.addF,m1.subF,m1.mulF);
 		
 		for (int i = 0; i < m1.n; i++)
 		{
@@ -79,7 +83,7 @@ public:
 			{
 
 				for (int k = 0; k < temp.n; k++) // OR k<b.GetLength(0)
-					temp[i][j] = m1.addF(temp[i][j], m1.mulF(m1[i][k], m2[k][j]));
+					temp.set( m1.addF(temp.get(i,j), m1.mulF(m1.get(i,k), m2.get(k,j))),i,j);
 			}
 		}
 
@@ -92,7 +96,7 @@ public:
 			{
 				for (j = 0; j < n; j++)
 				{
-					cout << mat[i][ j] << " ";
+					cout <<mat[i][j] << " ";
 				}
 				cout << " " << endl;
 
@@ -194,8 +198,8 @@ int main() {
 	for (i = 0; i < M1d.n; i++)
 		for (j = 0; j < M1d.n; j++)
 		{
-			M1d[i, j] = 1.1 * i + j;
-			M2d[i, j] = 10.1 * i + 1.1 * j;
+			M1d.set( 1.1 * i + j,i,j);
+			M2d.set( 10.1 * i + 1.1 * j,i,j);
 		} // for
 
 	cout << ("M1d:") << endl;
@@ -221,8 +225,8 @@ int main() {
 	for (i = 0; i < M1i.n; i++)
 		for (j = 0; j < M1i.n; j++)
 		{
-			M1i[i, j] = i + 10 * j;
-			M2i[i, j] = 100 * i + 10 * j;
+			M1i.set ( i + 10 * j,i,j);
+			M2i.set(100 * i + 10 * j,i,j);
 		} // for
 
 	cout << ("\n\nM1i:") << endl;
