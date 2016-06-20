@@ -47,11 +47,11 @@ public:
 		return *mat[i];
 	}
 
-	void operator=(const T& other)//override operator =
+	void operator=(const T& t)//override operator =
 	{
 		for (int i = 0; i < n; i++)
 			for (j = 0; j < n;j++)
-				mat.set(other,i,j);
+				mat.set(t,i,j);
 	}
 	friend Matrix operator +(Matrix<T> m1, Matrix <T> m2)
 	{
@@ -105,20 +105,11 @@ public:
 
 
 
-	/*T add(T t1, T t2) {
-		return addF(t1, t2);
-	}
-	T sub(T t1, T t2)
-	{
-		return subF(t1, t2);
-	}
-	T mul(T t1, T t2) {
-		return mulF(t1,t2);
-	}*/
+	
 
 };
 
-//class mainClass {
+
 	int int_add(int x, int y)
 	{
 		int ix, iy, iz;
@@ -184,10 +175,9 @@ public:
 		dz = dx * dy;
 		return ((double)dz);
 	} // double_mul
-//};
+
 int main() {
 
-	function <int(int, int)> A = [](int x,int y) { return x + y; };
 	int n = 5, i, j;
 	Matrix<double> M1d =  Matrix<double>(n, double_add, double_sub, double_mul),
 		M2d =  Matrix<double>(n, double_add, double_sub, double_mul),
@@ -244,9 +234,5 @@ int main() {
 	return 0;
 
 
-	//Matrix<int> m(10,A,A,A);
-
-	//int x = m.add(10,10);
-	//cout << x << endl;
-	//cin >> x;
+	
 }
