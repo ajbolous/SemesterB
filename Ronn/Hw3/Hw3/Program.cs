@@ -206,6 +206,7 @@ namespace Matrix_Type
             M3i = M1i * M2i;
             Console.WriteLine("M1i * M2i:");
             M3i.print();
+            Console.WriteLine(" <3");
             Console.ReadLine();
             
 
